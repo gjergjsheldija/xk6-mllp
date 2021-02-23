@@ -19,7 +19,7 @@ $ ./k6 run --vus 60 --duration 1m test.js
 ## Docker
 
 ```shell
-docker run -i xk6-mllp:latest --vus 60 --duration 1m run - < test.js
+docker run -i gjergjsheldija/xk6-mllp:latest --vus 60 --duration 1m run - < test.js
 ```
 
 ## Example
