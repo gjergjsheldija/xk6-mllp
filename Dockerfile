@@ -15,6 +15,7 @@ COPY go.mod .
 COPY go.sum .
 COPY mllp.go .
 COPY client.go .
+COPY stats.go .
 RUN go mod download
 
 RUN go get -u github.com/k6io/xk6/cmd/xk6
