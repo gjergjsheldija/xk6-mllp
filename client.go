@@ -38,23 +38,18 @@ func (m *MLLP) Send(ctx context.Context, file string) error {
 	return nil
 }
 
-const (
-	startBlock = '\x0b'
-	endBlock   = '\x1c'
-	cr         = '\x0d'
-)
-
 //Send sends a file over MLLP
 func (m *MLLP) sendFile(ctx context.Context, file string) error {
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", m.opts.Host, m.opts.Port))
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	defer conn.Close()
 
 	// send data
 	fileContents := m.readFile(file)
-	sent, err := fmt.Fprint(conn, encapsulate([]byte(fileContents)))
+	sent, err := conn.Write(encapsulate([]byte(fileContents)))
 	if err != nil {
 		return err
 	}
@@ -85,6 +80,12 @@ func (m *MLLP) sendFile(ctx context.Context, file string) error {
 	return nil
 }
 
+const (
+	startBlock = '\x0b'
+	endBlock   = '\x1c'
+	cr         = '\x0d'
+)
+
 // encapsulate adds startBlock, endBlock and cr to the message to make it hl7v2 conformant
 func encapsulate(in []byte) []byte {
 	out := make([]byte, len(in)+3)
@@ -94,6 +95,7 @@ func encapsulate(in []byte) []byte {
 	}
 	out[len(out)-2] = endBlock
 	out[len(out)-1] = cr
+
 	return out
 }
 
