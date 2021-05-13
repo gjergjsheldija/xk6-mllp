@@ -1,5 +1,5 @@
 
-FROM golang:1.15.2-alpine AS builder
+FROM golang:1.16.4-alpine AS builder
 
 # Set necessary environmet variables needed for our image
 ENV GO111MODULE=on \
@@ -18,7 +18,7 @@ COPY client.go .
 COPY stats.go .
 RUN go mod download
 
-RUN go get -u github.com/k6io/xk6/cmd/xk6
+RUN go install github.com/k6io/xk6/cmd/xk6@latest
 RUN xk6 build --with github.com/gjergjsheldija/xk6-mllp=. 
 
 ############################

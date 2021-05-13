@@ -1,6 +1,6 @@
 package mllp
 
-import "github.com/loadimpact/k6/stats"
+import "go.k6.io/k6/stats"
 
 var (
 	WriterWrites   = stats.New("mllp.bytes.sent", stats.Counter)
