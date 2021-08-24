@@ -11,7 +11,7 @@ To build a `k6` binary with this extension, first ensure you have the prerequisi
 - Git
 
 ```bash
-$ go install github.com/k6io/xk6/cmd/xk6@latest
+$ go install go.k6.io/xk6/cmd/xk6@latest
 $ xk6 build --with github.com/gjergjsheldija/xk6-mllp=. 
 $ ./k6 run --vus 60 --duration 1m test.js   
 ```
