@@ -1,45 +1,45 @@
 package mllp
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"go.k6.io/k6/lib"
-	"go.k6.io/k6/stats"
+	"github.com/dop251/goja"
+	"go.k6.io/k6/js/common"
+	"go.k6.io/k6/metrics"
 	"io/ioutil"
 	"net"
 	"os"
 	"time"
 )
 
-type MLLP struct {
-	opts Options
-}
+func (m *HL7) client(c goja.ConstructorCall) *goja.Object {
 
-type Options struct {
-	Host string
-	Port int
-}
+	rt := m.vu.Runtime()
 
-func NewClient(opts *Options) *MLLP {
-	return &MLLP{
+	var cfg Options
+	err := rt.ExportTo(c.Argument(0), &cfg)
+	if err != nil {
+		common.Throw(rt, fmt.Errorf("HL7 constructor expect Options as it's argument: %w", err))
+	}
+
+	return rt.ToValue(&HL7{
 		opts: Options{
-			Host: opts.Host,
-			Port: opts.Port,
-		}}
+			Host: cfg.Host,
+			Port: cfg.Port,
+		}}).ToObject(rt)
 }
 
-// Set the given key with the given value and expiration time.
-func (m *MLLP) Send(ctx context.Context, file string) error {
-	err := m.sendFile(ctx, file)
+// Send Set the given key with the given value and expiration time.
+func (m *HL7) Send(file string) error {
+	err := m.sendFile(file)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-//Send sends a file over MLLP
-func (m *MLLP) sendFile(ctx context.Context, file string) error {
+// sendFile sends a file over MLLP
+func (m *HL7) sendFile(file string) error {
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", m.opts.Host, m.opts.Port))
 	if err != nil {
 		fmt.Println(err)
@@ -61,20 +61,35 @@ func (m *MLLP) sendFile(ctx context.Context, file string) error {
 		return err
 	}
 
-	state := lib.GetState(ctx)
+	err = m.publishMetrics(sent, resp)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *HL7) publishMetrics(sent int, resp int) error {
+	// publish metrics
+	now := time.Now()
+	state := m.vu.State()
 	if state == nil {
 		return errors.New("state is nil")
 	}
 
-	stats.PushIfNotDone(ctx, state.Samples, stats.Sample{
-		Metric: WriterWrites,
-		Time:   time.Time{},
-		Value:  float64(sent),
+	ctx := m.vu.Context()
+	if ctx == nil {
+		return errors.New("context is nil")
+	}
+	metrics.PushIfNotDone(ctx, state.Samples, metrics.Sample{
+		TimeSeries: metrics.TimeSeries{Metric: m.metrics.SentMessages},
+		Time:       now,
+		Value:      float64(sent),
 	})
-	stats.PushIfNotDone(ctx, state.Samples, stats.Sample{
-		Metric: WriterReceived,
-		Time:   time.Time{},
-		Value:  float64(resp),
+	metrics.PushIfNotDone(ctx, state.Samples, metrics.Sample{
+		TimeSeries: metrics.TimeSeries{Metric: m.metrics.SentBytes},
+		Time:       now,
+		Value:      float64(resp),
 	})
 
 	return nil
@@ -99,7 +114,8 @@ func encapsulate(in []byte) []byte {
 	return out
 }
 
-func (m *MLLP) readFile(file string) string {
+// readFile reads the file to be used as a test
+func (m *HL7) readFile(file string) string {
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
 		fmt.Println("Reading file failed:", err.Error())
