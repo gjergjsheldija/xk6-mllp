@@ -2,6 +2,7 @@ package mllp
 
 import (
 	"errors"
+
 	"go.k6.io/k6/js/modules"
 	"go.k6.io/k6/metrics"
 )

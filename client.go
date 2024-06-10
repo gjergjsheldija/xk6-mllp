@@ -3,17 +3,17 @@ package mllp
 import (
 	"errors"
 	"fmt"
-	"github.com/dop251/goja"
-	"go.k6.io/k6/js/common"
-	"go.k6.io/k6/metrics"
 	"io/ioutil"
 	"net"
 	"os"
 	"time"
+
+	"github.com/grafana/sobek"
+	"go.k6.io/k6/js/common"
+	"go.k6.io/k6/metrics"
 )
 
-func (m *HL7) client(c goja.ConstructorCall) *goja.Object {
-
+func (m *HL7) client(c sobek.ConstructorCall) *sobek.Object {
 	rt := m.vu.Runtime()
 
 	var cfg Options
@@ -26,7 +26,8 @@ func (m *HL7) client(c goja.ConstructorCall) *goja.Object {
 		opts: Options{
 			Host: cfg.Host,
 			Port: cfg.Port,
-		}}).ToObject(rt)
+		},
+	}).ToObject(rt)
 }
 
 // Send Set the given key with the given value and expiration time.
